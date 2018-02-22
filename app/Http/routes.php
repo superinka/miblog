@@ -3,7 +3,10 @@
     //     return view('page');
     // });
     Route::group(['prefix' => 'admin', 'namespace' => 'Admin'], function () {
-        Route::resource('dashboard', 'DashboardController@index');
+        Route::resource('dashboard', 'DashboardController');
+        Route::resource('post', 'PostController');
+        Route::resource('postcategory', 'PostCategoryController');
+        Route::resource('category', 'CategoryController');
     // Route::resource('customers', 'CustomersController');
     // Route::resource('brands', 'BrandsController');
     // Route::resource('product-categories', 'ProductCategoriesController');
