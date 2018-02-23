@@ -1,6 +1,9 @@
 <script type="text/javascript" src="{{ asset('theme/assets/js/plugins/tables/datatables/datatables.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('theme/assets/js/plugins/forms/select2/select2.min.js') }}"></script>
 
+<script type="text/javascript" src="{{ asset('theme/assets/js/plugins/notifications/sweetalert2.min.js') }}"></script>
+<link rel="stylesheet" href="{{ asset('theme/assets/js/plugins/notifications/sweetalert2.min.css') }}">
+
 <script type="text/javascript">
 
 /* ------------------------------------------------------------------------------

@@ -38,6 +38,12 @@ Route::post('/admin/category/action', 'Admin\CategoryController@action');
 Route::get('/admin/category/create', 'Admin\CategoryController@create');
 Route::post('/admin/category/create', 'Admin\CategoryController@create');
 
+Route::get('/admin/postcategory/edit', 'Admin\PostCategoryController@edit');
+Route::post('/admin/postcategory/edit', 'Admin\PostCategoryController@edit');
+
+Route::get('/admin/postcategory/destroy', 'Admin\PostCategoryController@destroy');
+Route::post('/admin/postcategory/destroy', 'Admin\PostCategoryController@destroy');
+
 Route::get('/admin/postcategory/check_slug', 'Admin\PostCategoryController@check_slug');
 Route::post('/admin/postcategory/check_slug', 'Admin\PostCategoryController@check_slug');
 

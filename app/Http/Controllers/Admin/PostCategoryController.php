@@ -27,15 +27,7 @@ class PostCategoryController extends Controller
 
         }
 
-        //$categories = PostCategory::where('parent_id', '=', 0)->get();
-        //$allCategories = PostCategory::pluck('name','id')->all();
-
         $tree = PostCategory::descendantsOf(1)->toTree(1);
-
-        // $node = PostCategory::get()->find(8);
-        // $parent = PostCategory::get()->find(6);
-        // $node->appendToNode($parent)->save();
-
         $params = [
             'title'         => 'DANH MỤC BÀI VIẾT - MIBLOG',
             'categories'    => $categories,
@@ -66,10 +58,10 @@ class PostCategoryController extends Controller
             case 'edit':
                 $id = $input['id'];
                 $info = PostCategory::find($id);
-                $output = $this->output();
+                $output2 = $this->output2($id);
                 $params = [
                     'title' => 'Sửa danh mục',
-                    'output'    => $output,
+                    'output2'    => $output2,
                     'info'  => $info
                 ];
                 return view('components.postcategory.edit_modal')->with($params);
@@ -138,11 +130,6 @@ class PostCategoryController extends Controller
             $parent = PostCategory::get()->find($parent);
             $node->appendToNode($parent)->save();
         }
-
-        // $category = PostCategory::create([
-        //     'name' => $request->input('name'),
-        //     'description' => $request->input('description'),
-        // ]);
         return response()->json($errors);
     }
 
@@ -167,96 +154,73 @@ class PostCategoryController extends Controller
 
         return redirect()->route('product-categories.index')->with('success', "The product category <strong>$category->name</strong> has successfully been created.");
     }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        try
-        {
-            $category = Category::findOrFail($id);
-
-            $params = [
-                'title' => 'Edit Product Category',
-                'category' => $category,
-            ];
-
-            return view('admin.categories.categories_delete')->with($params);
-        }
-        catch (ModelNotFoundException $ex) 
-        {
-            if ($ex instanceof ModelNotFoundException)
-            {
-                return response()->view('errors.'.'404');
-            }
-        }
-    }
-
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request)
     {
-        try
-        {
-            $category = Category::findOrFail($id);
+        $errors  = array('error' => 0);
+        $id                 = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $name               = isset($_POST['name']) ? trim($_POST['name']) : '';
+        $parent             = isset($_POST['parent']) ? intval($_POST['parent']) : 0;
+        $description        = isset($_POST['description']) ? trim($_POST['description']) : '';
+        $slug               = isset($_POST['slug']) ? trim($_POST['slug']) : '';
+        $valid              = isset($_POST['valid']) ? trim($_POST['valid']) : '';
 
-            $params = [
-                'title' => 'Edit Product Category',
-                'category' => $category,
-            ];
+        //check null
+        if (empty($name)){ $errors['name'] = 'Xin nhập tên danh mục';}
+        if (empty($slug)){ $errors['slug'] = 'Slug không được trống';}
 
-            return view('admin.categories.categories_edit')->with($params);
+        if (count($errors) > 1){
+            $errors['error'] = 1;
+            return response()->json($errors);
         }
-        catch (ModelNotFoundException $ex) 
-        {
-            if ($ex instanceof ModelNotFoundException)
-            {
-                return response()->view('errors.'.'404');
+
+        $id = intval($id);
+        // check duplicate name
+        $info = PostCategory::find($id);
+        if(strtolower($name) != strtolower($info->name)){
+            $query = $this->findCategory($name);
+            if(count($query)){
+                $errors['name'] = 'Tên danh mục đã tồn tại';
+            }
+
+            if (PostCategory::where('slug', '=', $slug)->exists()) {
+                $errors['slug'] = 'slug đã tồn tại';
+            }
+
+            if (count($errors) > 1){
+                $errors['error'] = 1;
+                return response()->json($errors);
             }
         }
+
+        if($parent == 0){
+            //print_r('OK');
+            //$node = PostCategory::get()->find($id);
+            $node = PostCategory::findOrFail($id);
+            $node->name = $name;
+            $node->description = $description;
+            $node->slug = $slug;
+            $node->valid = $valid;
+
+            $node->saveAsRoot(); // Saved as root
+        }else{
+            $node = PostCategory::findOrFail($id);
+            $node->name = $name;
+            $node->description = $description;
+            $node->slug = $slug;
+            $node->valid = $valid;
+
+            $parent = PostCategory::get()->find($parent);
+            $node->appendToNode($parent)->save();
+        }
+        return response()->json($errors);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        try
-        {
-            $this->validate($request, [
-                'name' => 'required|unique:categories,name,'.$id,
-                'description' => 'required',
-            ]);
-
-            $category = Category::findOrFail($id);
-
-            $category->name = $request->input('name');
-            $category->description = $request->input('description');
-
-            $category->save();
-
-            return redirect()->route('product-categories.index')->with('success', "The product category <strong>Category</strong> has successfully been updated.");
-        }
-        catch (ModelNotFoundException $ex) 
-        {
-            if ($ex instanceof ModelNotFoundException)
-            {
-                return response()->view('errors.'.'404');
-            }
-        }
-    }
 
     /**
      * Remove the specified resource from storage.
@@ -264,22 +228,29 @@ class PostCategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        try
-        {
-            $category = Category::findOrFail($id);
 
-            $category->delete();
-
-            return redirect()->route('product-categories.index')->with('success', "The product category <strong>Category</strong> has successfully been archived.");
-        }
-        catch (ModelNotFoundException $ex) 
-        {
-            if ($ex instanceof ModelNotFoundException)
+        $errors  = array('error' => 0);
+        if ($_POST['id']) {
+            
+            $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+            try
             {
-                return response()->view('errors.'.'404');
+                $category = PostCategory::findOrFail($id);
+    
+                $category->delete();
+    
+                //return redirect()->route('product-categories.index')->with('success', "The product category <strong>Category</strong> has successfully been archived.");
             }
+            catch (ModelNotFoundException $ex) 
+            {
+                if ($ex instanceof ModelNotFoundException)
+                {
+                    $errors['errors'] = 1;
+                }
+            }
+            return response()->json($errors);
         }
     }
 
@@ -319,7 +290,29 @@ class PostCategoryController extends Controller
 
         return $traverse($nodes);
     }
+    function output2($id){
+        $nodes = PostCategory::get()->toTree();
+        $traverse = function ($categories, $prefix = '-',$id) use (&$traverse) {
+            $html ="";
+            $info = PostCategory::find($id);
+            if($info->parent){
+                $pid = $info->parent->id;
+            }
+            else{
+                $pid = 0;
+            }
+            //print_r($pid);
+            foreach ($categories as $category) {
+                $select = ($category->id==$pid) ? 'selected' : '';
+                $html ='<option value="'.$category->id.'" '.$select.'>'.$prefix.' '.$category->name.'</option>';
+                $this->f.= $html;
+                $traverse($category->children, $prefix.'-',$id);
+            }
+            return $this->f;
+        };
 
+        return $traverse($nodes,'-',$id);
+    }
     public function findCategory($name, $withTrashed = false)
     {
         $q = new PostCategory;

@@ -46,19 +46,7 @@
                     <td><a href="#"><?=$value->created_at?></a></td>
                     <td><?= ($value->valid==1) ? '<span class="label label-info">active</span>' : '<span class="label label-danger">inactive</span>' ?></td>
                     <td class="text-center">
-                        <ul class="icons-list">
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    <i class="icon-menu9"></i>
-                                </a>
-    
-                                <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a href="#"><i class="icon-file-pdf"></i> Export to .pdf</a></li>
-                                    <li><a href="#"><i class="icon-file-excel"></i> Export to .csv</a></li>
-                                    <li><a href="#"><i class="icon-file-word"></i> Export to .doc</a></li>
-                                </ul>
-                            </li>
-                        </ul>
+                        <a href="#" id="delete" data-id="<?=$value->id ?>"><i class="icon-bin"></i></a>
                     </td>
                 </tr>
             <?php } ?>
@@ -106,4 +94,58 @@ $(document).ready(function(){
     });
 
 });
+</script>
+
+<script>
+$(document).ready(function(){
+    $(document).on('click', '#delete', function(e){
+        
+        var productId = $(this).data('id');
+        SwalDelete(productId);
+        e.preventDefault();
+    });
+
+});
+
+function SwalDelete(productId){
+        
+        swal({
+            title:'Bạn có chắc chắn?',
+            text: "Dữ liệu này sẽ bị xóa ngay lập tức!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Đúng, Xóa nó!',
+            cancelButtonText: 'Bỏ qua',
+            showLoaderOnConfirm: true,
+                
+            preConfirm: function() {
+                return new Promise(function(resolve) {
+                    //console.log(productId);
+                    data = {id:productId};
+                    $.ajaxSetup({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        }
+                    });
+                    $.ajax({
+                        url: "/admin/postcategory/destroy",
+                        type : "POST",
+                        dataType : "JSON",
+                        data : data
+                    })
+                    .done(function(response){
+                        swal('Đã xóa!', response.message, response.status);
+                    location.reload(); // then reload the page.
+                    })
+                    .fail(function(){
+                        swal('Oops...', 'Có lỗi xảy ra !', 'error');
+                    });
+                });
+            },
+            allowOutsideClick: false			  
+        });	
+        
+    }
 </script>

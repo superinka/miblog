@@ -17,7 +17,7 @@
                 <div class="col-sm-12 col-md-9">
                     <select class="basic-single select select-fixed-single" id="parent" name="state">
                         <option value="0">Danh mục gốc</option>
-                        <?php echo $output; ?>
+                        <?php echo $output2; ?>
                     </select>
                 </div>
             </div>
@@ -25,7 +25,7 @@
             <div class="form-group">
                 <label class="control-label col-sm-12 col-md-3">Mô tả</label>
                 <div class="col-sm-12 col-md-3">
-                    <textarea rows="5" cols="5" class="form-control" id="description" placeholder="Mô tả nhanh"></textarea>
+                    <textarea rows="5" cols="5" class="form-control" id="description" placeholder="Mô tả nhanh"><?=$info->description?></textarea>
                 </div>
             </div>
     
@@ -38,7 +38,7 @@
     
             <div class="checkbox">
                 <label>
-                    <input type="checkbox" class="styled" id="valid" checked="checked">
+                    <input type="checkbox" class="styled" id="valid" <?=($info->valid==1)? 'checked="checked"' : "";  ?>>
                     Valid
                 </label>
             </div>
@@ -87,6 +87,7 @@
             
         // when click submit
         $('#add').click(function(){
+            var id = "<?php echo $info->id ?>";
             var name            = $('#name').val();
             var parent          = $('#parent').val();
             var description     = $('#description').val();
@@ -105,6 +106,7 @@
                 dataType : "JSON",
                 url: "<?php echo url('admin/postcategory/edit'); ?>",
                 data : {
+                    id              : id,
                     name            : name,
                     parent          : parent,
                     description     : description,
